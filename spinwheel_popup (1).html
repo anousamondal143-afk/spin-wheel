@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Fun Spin Wheel</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #111 0%, #000 100%);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+    h1 {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+    #wheelCanvas {
+      border-radius: 50%;
+      box-shadow: 0 0 25px #0ff, 0 0 50px #f0f, 0 0 75px #ff0;
+    }
+    #spinBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background: linear-gradient(45deg, #0ff, #f0f);
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 15px #0ff, 0 0 30px #f0f;
+      transition: transform 0.2s;
+    }
+    #spinBtn:hover {
+      transform: scale(1.05);
+    }
+    #resultPopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+    }
+    #resultPopup div {
+      background: #111;
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px #0ff, 0 0 40px #f0f;
+      text-align: center;
+    }
+    #resultPopup h2 {
+      color: #0ff;
+      font-size: 28px;
+      text-shadow: 0 0 15px #0ff, 0 0 30px #f0f;
+    }
+    #closePopup {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #0ff, #f0f);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎡 Neon Spin Wheel 🎡</h1>
+  <canvas id="wheelCanvas" width="400" height="400"></canvas>
+  <button id="spinBtn">SPIN</button>
+
+  <div id="resultPopup">
+    <div>
+      <h2 id="popupText"></h2>
+      <button id="closePopup">OK</button>
+    </div>
+  </div>
+
+  <script>
+    const options = [
+      "Tell me a secret",
+      "Do aegyo",
+      "Sing a song",
+      "Text everyone that you had your first kiss",
+      "Tell me your Insta password",
+      "Eat something weird (I will choose)",
+      "Send me your right now photo",
+      "Tell your family that you got a bf"
+    ];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    const radius = canvas.width / 2;
+    let angle = 0;
+    let spinning = false;
+
+    function drawWheel() {
+      const sliceAngle = (2 * Math.PI) / options.length;
+      for (let i = 0; i < options.length; i++) {
+        const startAngle = angle + i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, startAngle, endAngle);
+        ctx.fillStyle = `hsl(${(i * 360) / options.length}, 100%, 50%)`;
+        ctx.fill();
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(options[i], radius - 10, 5);
+        ctx.restore();
+      }
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      const spinAngle = Math.random() * 360 + 1800;
+      const duration = 5000;
+      const start = performance.now();
+
+      function animate(time) {
+        const elapsed = time - start;
+        if (elapsed < duration) {
+          const progress = elapsed / duration;
+          angle = (spinAngle * progress) * Math.PI / 180;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawWheel();
+          requestAnimationFrame(animate);
+        } else {
+          const finalAngle = (spinAngle * Math.PI) / 180;
+          angle = finalAngle;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawWheel();
+
+          const sliceAngle = (2 * Math.PI) / options.length;
+          const index = Math.floor(((2 * Math.PI - (finalAngle % (2 * Math.PI))) % (2 * Math.PI)) / sliceAngle);
+          const result = options[index];
+
+          document.getElementById("popupText").textContent = result;
+          document.getElementById("resultPopup").style.display = "flex";
+
+          new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3").play();
+
+          spinning = false;
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById("spinBtn").addEventListener("click", spinWheel);
+    document.getElementById("closePopup").addEventListener("click", () => {
+      document.getElementById("resultPopup").style.display = "none";
+    });
+
+    drawWheel();
+  </script>
+</body>
+</html>
